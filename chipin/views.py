@@ -10,6 +10,7 @@ from .forms import GroupCreationForm
 from .models import Group
 import urllib.parse
 from .models import GroupJoinRequest
+import logging
 
 @login_required
 def vote_on_join_request(request, group_id, request_id, vote):
@@ -109,10 +110,12 @@ def home(request):
 
 @login_required
 def create_group(request):
+    logger = logging.getLogger(__name__)
     if request.method == 'POST':
         form = GroupCreationForm(request.POST, user=request.user)
         if form.is_valid():
             group = form.save()
+            logger.info(f"User '{request.user.username}' created group '{group.name}'.")  # Log group creation
             messages.success(request, f'Group "{group.name}" created successfully!')
             return redirect('chipin:group_detail', group_id=group.id)
     else:

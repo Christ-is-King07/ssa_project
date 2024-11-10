@@ -7,6 +7,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 from .forms import UserRegistrationForm
+import logging
 
 @login_required
 def privacy_settings(request):
@@ -39,6 +40,7 @@ def register(request):
 def user(request):
     return render(request, "users/user.html")
 
+logger = logging.getLogger(__name__)
 def login_view(request):
     if request.method == "POST":
         username = request.POST["username"]
@@ -46,13 +48,16 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
+            logger.info(f"User '{user.username}' logged in successfully.")  # Log successful login
             next_url = request.GET.get('next', reverse("users:user"))
             return HttpResponseRedirect(next_url)
         else:
+            logger.warning(f"Failed login attempt for username '{username}'.")  # Log failed login
             messages.error(request, "Invalid Credentials.")
     return render(request, "users/login.html")
 
 def logout_view(request):
+    logger.info(f"User '{request.user.username}' logged out.")  # Log logout
     logout(request)
     messages.success(request, "Successfully logged out.")
     return redirect('users:login')
