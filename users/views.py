@@ -3,18 +3,36 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.contrib import messages
 from .forms import UserRegistrationForm
 
+@login_required
+def privacy_settings(request):
+    if request.method == 'POST':
+        request.user.is_profile_public = request.POST.get('is_profile_public', False)
+        request.user.save()
+        messages.success(request, 'Privacy settings updated.')
+    return render(request, 'users/privacy_settings.html')
+
+@login_required
+def delete_account(request):
+    if request.method == 'POST':
+        request.user.delete()  # Deletes the user's account and all related data
+        messages.success(request, 'Your account has been deleted.')
+        return redirect('home')
+    return render(request, 'users/delete_account.html')
+
 def register(request):
-    if request.method == "POST":
-        form = UserRegistrationForm(request.POST)
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Your account has been created! You can now log in.")
-            return redirect('users:login')
+            form.save()  # Automatically hashes the password before saving
+            messages.success(request, 'Account created successfully! You can now log in.')
+            return redirect('login')
     else:
-        form = UserRegistrationForm()
+        form = UserCreationForm()
     return render(request, 'users/register.html', {'form': form})
 
 @login_required(login_url='users:login')
